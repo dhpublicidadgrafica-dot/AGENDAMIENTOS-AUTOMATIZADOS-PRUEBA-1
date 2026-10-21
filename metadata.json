@@ -1,0 +1,6 @@
+{
+  "name": "NOVA - Agendamientos Inteligentes Multiempresa",
+  "description": "Plataforma SaaS multiempresa para agendamiento inteligente de citas, gestión de servicios, horarios y reservas personalizadas para múltiples sectores.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

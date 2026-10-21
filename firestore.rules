@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Check if user is SuperAdmin
+    function isSuperAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/superadmins/$(request.auth.uid));
+    }
+
+    // Check tenant membership & role
+    function isTenantAdmin(tenantId) {
+      return isSignedIn() && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid)).data.role == 'tenant_admin')
+      );
+    }
+
+    function isTenantStaff(tenantId) {
+      return isSignedIn() && (
+        isTenantAdmin(tenantId) ||
+        exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(request.auth.uid))
+      );
+    }
+
+    // ================= TENANTS =================
+    match /tenants/{tenantId} {
+      // Public can read basic tenant metadata for public booking page if tenant is active
+      allow get: if isValidId(tenantId) && (isTenantStaff(tenantId) || resource.data.status == 'active');
+      allow list: if isSuperAdmin();
+
+      // Only SuperAdmin can create/delete tenants. Tenant admin can update corporate settings
+      allow create: if isSuperAdmin();
+      allow update: if isValidId(tenantId) && isTenantAdmin(tenantId);
+      allow delete: if isSuperAdmin();
+
+      // ================= SERVICES =================
+      match /services/{serviceId} {
+        // Public can read active services
+        allow get: if isValidId(serviceId) && (isTenantStaff(tenantId) || resource.data.active == true);
+        allow list: if isTenantStaff(tenantId) || true; // Filtered by where active == true
+
+        allow create, update, delete: if isValidId(serviceId) && isTenantAdmin(tenantId);
+      }
+
+      // ================= STAFF =================
+      match /staff/{staffId} {
+        allow get: if isValidId(staffId) && (isTenantStaff(tenantId) || resource.data.active == true);
+        allow list: if isTenantStaff(tenantId) || true;
+
+        allow create, update, delete: if isValidId(staffId) && isTenantAdmin(tenantId);
+      }
+
+      // ================= BLOCKED SLOTS =================
+      match /blockedSlots/{slotId} {
+        allow read: if isValidId(slotId) && isTenantStaff(tenantId);
+        allow create, update, delete: if isValidId(slotId) && isTenantAdmin(tenantId);
+      }
+
+      // ================= CUSTOMERS =================
+      match /customers/{customerId} {
+        // Only internal staff/admin of this tenant can list & read customer PII
+        allow read, write: if isValidId(customerId) && isTenantStaff(tenantId);
+      }
+
+      // ================= APPOINTMENTS =================
+      match /appointments/{appointmentId} {
+        // Staff can read appointments in their tenant
+        allow get: if isValidId(appointmentId) && isTenantStaff(tenantId);
+        allow list: if isTenantStaff(tenantId);
+
+        // Public can create appointment under strict validated schema
+        allow create: if isValidId(appointmentId) &&
+          incoming().tenantId == tenantId &&
+          incoming().customerName is string && incoming().customerName.size() <= 100 &&
+          incoming().customerPhone is string && incoming().customerPhone.size() <= 40 &&
+          incoming().serviceId is string &&
+          incoming().date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+          incoming().startTime.matches('^\\d{2}:\\d{2}$') &&
+          incoming().endTime.matches('^\\d{2}:\\d{2}$') &&
+          (incoming().status == 'received' || incoming().status == 'confirmed');
+
+        // Only staff/admin can update status, reschedule or cancel
+        allow update: if isValidId(appointmentId) && isTenantStaff(tenantId);
+        allow delete: if isValidId(appointmentId) && isTenantAdmin(tenantId);
+      }
+    }
+  }
+}

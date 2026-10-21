@@ -1,0 +1,183 @@
+{
+  "entities": {
+    "Tenant": {
+      "title": "Tenant",
+      "description": "Configuración y datos corporativos de una empresa en la plataforma multiempresa.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "slug": { "type": "string", "maxLength": 60, "pattern": "^[a-z0-9\\-]+$" },
+        "sector": { "type": "string", "maxLength": 50 },
+        "description": { "type": "string", "maxLength": 500 },
+        "logo": { "type": "string", "maxLength": 500 },
+        "banner": { "type": "string", "maxLength": 500 },
+        "primaryColor": { "type": "string", "maxLength": 30 },
+        "accentColor": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "whatsapp": { "type": "string", "maxLength": 40 },
+        "address": { "type": "string", "maxLength": 200 },
+        "timezone": { "type": "string", "maxLength": 60 },
+        "currency": { "type": "string", "maxLength": 10 },
+        "autoConfirm": { "type": "boolean" },
+        "advanceMinHours": { "type": "number" },
+        "advanceMaxDays": { "type": "number" },
+        "cancelMinHours": { "type": "number" },
+        "slotIntervalMinutes": { "type": "number" },
+        "bookingTerms": { "type": "string", "maxLength": 2000 },
+        "dataPolicyNotice": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["active", "suspended"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "slug", "sector", "email", "status", "createdAt"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "Servicio ofrecido por una empresa con duración, precio y preguntas dinámicas específicas de sector.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "price": { "type": "number" },
+        "durationMinutes": { "type": "number" },
+        "bufferMinutes": { "type": "number" },
+        "active": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "tenantId", "name", "price", "durationMinutes", "active"]
+    },
+    "Staff": {
+      "title": "Staff",
+      "description": "Profesional, empleado o recurso de atención asignado a una empresa.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "roleTitle": { "type": "string", "maxLength": 100 },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "tenantId", "name", "email", "roleTitle", "active"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Registro de cita o reserva de un cliente en un horario de la empresa.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "bookingCode": { "type": "string", "maxLength": 30 },
+        "customerName": { "type": "string", "maxLength": 100 },
+        "customerPhone": { "type": "string", "maxLength": 40 },
+        "customerEmail": { "type": "string", "maxLength": 120 },
+        "serviceId": { "type": "string", "maxLength": 128 },
+        "serviceName": { "type": "string", "maxLength": 100 },
+        "servicePrice": { "type": "number" },
+        "serviceDuration": { "type": "number" },
+        "serviceBuffer": { "type": "number" },
+        "staffId": { "type": "string", "maxLength": 128 },
+        "staffName": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "startTime": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" },
+        "endTime": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" },
+        "timezone": { "type": "string", "maxLength": 60 },
+        "modality": { "type": "string", "enum": ["presential", "home", "virtual"] },
+        "status": {
+          "type": "string",
+          "enum": [
+            "received",
+            "pending",
+            "confirmed",
+            "in_progress",
+            "completed",
+            "cancelled",
+            "no_show"
+          ]
+        },
+        "source": { "type": "string", "enum": ["public_web", "manual_admin"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": [
+        "id",
+        "tenantId",
+        "bookingCode",
+        "customerName",
+        "customerPhone",
+        "serviceId",
+        "serviceName",
+        "servicePrice",
+        "serviceDuration",
+        "date",
+        "startTime",
+        "endTime",
+        "status",
+        "createdAt"
+      ]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Cliente registrado asociado a una empresa.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "email": { "type": "string", "maxLength": 120 },
+        "totalBookings": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "tenantId", "name", "phone", "createdAt"]
+    },
+    "BlockedSlot": {
+      "title": "BlockedSlot",
+      "description": "Bloqueo horario o día festivo en el calendario de la empresa.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tenantId": { "type": "string", "maxLength": 128 },
+        "staffId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "allDay": { "type": "boolean" }
+      },
+      "required": ["id", "tenantId", "title", "date", "allDay"]
+    }
+  },
+  "firestore": {
+    "/tenants/{tenantId}": {
+      "schema": "Tenant",
+      "description": "Documentos maestros de empresas registradas."
+    },
+    "/tenants/{tenantId}/services/{serviceId}": {
+      "schema": "Service",
+      "description": "Servicios configurados para una empresa específica."
+    },
+    "/tenants/{tenantId}/staff/{staffId}": {
+      "schema": "Staff",
+      "description": "Empleados y profesionales de la empresa."
+    },
+    "/tenants/{tenantId}/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Citas y reservas gestionadas para la empresa."
+    },
+    "/tenants/{tenantId}/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Clientes registrados en la empresa."
+    },
+    "/tenants/{tenantId}/blockedSlots/{slotId}": {
+      "schema": "BlockedSlot",
+      "description": "Franjas bloqueadas y descansos."
+    }
+  }
+}
